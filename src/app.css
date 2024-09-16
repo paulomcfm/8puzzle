@@ -1,0 +1,8 @@
+.square-blink {
+    animation: blink 0.5s ease-in-out;
+  }
+  
+  @keyframes blink {
+    0%, 100% { background-color: initial; }
+    50% { background-color: yellow; }
+  }
