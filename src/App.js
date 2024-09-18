@@ -351,7 +351,7 @@ const App = () => {
           <Button className="mt-3" onClick={handleShuffle}>Embaralhar</Button>
           <Button className={`mt-3 ml-3 ${level === 'first' ? 'btn-danger' : ''}`} onClick={selectFirstLevel}>1º Nível</Button>
           <Button className={`mt-3 ml-3 ${level === 'second' ? 'btn-danger' : ''}`} onClick={selectSecondLevel}>2º Nível</Button>
-          <Button className="mt-3" onClick={handleBestFirst}>Resolver Best Frist</Button>
+          <Button className="mt-3" onClick={handleBestFirst}>Resolver Best First</Button>
           <div className=""></div>
           <Button className="mt-3" onClick={handleSolveA}>Resolver A*</Button>
         </Col>
