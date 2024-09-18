@@ -234,7 +234,7 @@ const App = () => {
       let secondLevelMoves = getPossibleMovesFirstLevel({ grid: move.grid, outOfOrder: move.outOfOrder, currentLevel: move.currentLevel, path: move.path });
       secondLevelMoves = secondLevelMoves.filter(secondMove => !areGridsEqual(secondMove.grid, actualGrid));
       if (secondLevelMoves.length > 0) {
-        move.outOfOrder = Math.min(...secondLevelMoves.map(secondMove => secondMove.outOfOrder));
+        move.outOfOrder = Math.min(...secondLevelMoves.map(secondMove => secondMove.outOfOrder+1));
       }
     });
   
