@@ -18,6 +18,7 @@ const App = () => {
   ]);
   const [finalGrid, setFinalGrid] = useState(null);
   const [level, setLevel] = useState('first');
+  const [heuristic, setHeuristic] = useState('outOfOrder');
   const [shuffleCount, setShuffleCount] = useState(10);
   const [totalTime, setTotalTime] = useState(0);
   const [numberOfVisitedNodes, setNumberOfVisitedNodes] = useState(0);
@@ -93,7 +94,7 @@ const App = () => {
 
     setTimeout(() => {
       animateShuffle(shuffleSteps, stepIndex + 1);
-    }, 500);
+    }, 10);
   };
 
   const handleShuffle = () => {
@@ -124,24 +125,24 @@ const App = () => {
     let visitedNodes = 0;
     let startTime = new Date().getTime();
     let queue = [];
-    let firstObject = { grid: actualGrid, outOfOrder: getOutOfOrder(actualGrid, goalGrid), path: [actualGrid] };
+    let firstObject = { grid: actualGrid, heuristic: getHeuristic(actualGrid, goalGrid), path: [actualGrid] };
     if (level === 'first') {
-      insertWithPriorityOutOfOrder(getPossibleMovesFirstLevel(firstObject), queue);
+      insertWithPriorityHeuristic(getPossibleMovesFirstLevel(firstObject), queue);
     } else {
-      insertWithPriorityOutOfOrder(getPossibleMovesSecondLevel(firstObject), queue);
+      insertWithPriorityHeuristic(getPossibleMovesSecondLevel(firstObject), queue);
     }
     actualGrid = queue.shift();
     while (!areGridsEqual(actualGrid.grid, goalGrid)) {
       if (level === 'first') {
-        insertWithPriorityOutOfOrder(getPossibleMovesFirstLevel(actualGrid), queue);
+        insertWithPriorityHeuristic(getPossibleMovesFirstLevel(actualGrid), queue);
       } else {
-        insertWithPriorityOutOfOrder(getPossibleMovesSecondLevel(actualGrid), queue);
+        insertWithPriorityHeuristic(getPossibleMovesSecondLevel(actualGrid), queue);
       }
       visitedNodes++;
       actualGrid = queue.shift();
     }
     let totalTime = new Date().getTime() - startTime;
-    setTotalTime(totalTime/1000);
+    setTotalTime(totalTime / 1000);
     setNumberOfVisitedNodes(visitedNodes);
     setPathSize(actualGrid.path.length);
     animateShuffle(actualGrid.path);
@@ -156,23 +157,23 @@ const App = () => {
     return true;
   };
 
-  const getPossibleMovesFirstLevel = ({ grid: actualGrid, outOfOrder, currentLevel, path }) => {
+  const getPossibleMovesFirstLevel = ({ grid: actualGrid, heuristic, currentLevel, path }) => {
     let listOfPossibleMoves = [];
     let emptyIndex = actualGrid.findIndex(square => square.value === '');
     let row = Math.floor(emptyIndex / 3);
     let col = emptyIndex % 3;
-  
+
     const addMove = (newGrid, currentLevel) => {
       if (!isGridInPath(newGrid, path)) {
         listOfPossibleMoves.push({
           grid: newGrid,
-          outOfOrder: getOutOfOrder(newGrid, finalGrid),
+          heuristic: getHeuristic(newGrid, finalGrid),
           currentLevel: currentLevel + 1,
           path: [...path, newGrid]
         });
       }
     };
-  
+
     if (row > 0) {
       let newGrid = actualGrid.map(square => ({ ...square }));
       [newGrid[emptyIndex].value, newGrid[emptyIndex - 3].value] = [newGrid[emptyIndex - 3].value, newGrid[emptyIndex].value];
@@ -193,22 +194,22 @@ const App = () => {
       [newGrid[emptyIndex].value, newGrid[emptyIndex + 1].value] = [newGrid[emptyIndex + 1].value, newGrid[emptyIndex].value];
       addMove(newGrid, currentLevel);
     }
-  
+
     return listOfPossibleMoves;
   };
 
-  const getPossibleMovesSecondLevel = ({ grid: actualGrid, outOfOrder, currentLevel, path }) => {
+  const getPossibleMovesSecondLevel = ({ grid: actualGrid, heuristic, currentLevel, path }) => {
     let listOfPossibleMoves = [];
     let emptyIndex = actualGrid.findIndex(square => square.value === '');
     let row = Math.floor(emptyIndex / 3);
     let col = emptyIndex % 3;
-  
+
     const addMove = (newGrid, currentLevel) => {
       if (!isGridInPath(newGrid, path)) {
-        listOfPossibleMoves.push({ grid: newGrid, outOfOrder: getOutOfOrder(newGrid, finalGrid), currentLevel: currentLevel+1, path: [...path, newGrid] });
+        listOfPossibleMoves.push({ grid: newGrid, heuristic: getHeuristic(newGrid, finalGrid), currentLevel: currentLevel + 1, path: [...path, newGrid] });
       }
     };
-  
+
     if (row > 0) {
       let newGrid = actualGrid.map(square => ({ ...square }));
       [newGrid[emptyIndex].value, newGrid[emptyIndex - 3].value] = [newGrid[emptyIndex - 3].value, newGrid[emptyIndex].value];
@@ -229,46 +230,154 @@ const App = () => {
       [newGrid[emptyIndex].value, newGrid[emptyIndex + 1].value] = [newGrid[emptyIndex + 1].value, newGrid[emptyIndex].value];
       addMove(newGrid, currentLevel);
     }
-  
+
     listOfPossibleMoves.forEach(move => {
-      let secondLevelMoves = getPossibleMovesFirstLevel({ grid: move.grid, outOfOrder: move.outOfOrder, currentLevel: move.currentLevel, path: move.path });
+      let secondLevelMoves = getPossibleMovesFirstLevel({ grid: move.grid, heuristic: move.heuristic, currentLevel: move.currentLevel, path: move.path });
       secondLevelMoves = secondLevelMoves.filter(secondMove => !areGridsEqual(secondMove.grid, actualGrid));
       if (secondLevelMoves.length > 0) {
-        move.outOfOrder = Math.min(...secondLevelMoves.map(secondMove => secondMove.outOfOrder));
+        move.heuristic = Math.min(...secondLevelMoves.map(secondMove => secondMove.heuristic));
       }
     });
-  
+
     return listOfPossibleMoves;
   };
 
-  const insertWithPriorityOutOfOrder = (nodes, queue) => {
+  const getPossibleMovesFirstLevelA = ({ grid: actualGrid, heuristic, currentLevel, path }) => {
+    let listOfPossibleMoves = [];
+    let emptyIndex = actualGrid.findIndex(square => square.value === '');
+    let row = Math.floor(emptyIndex / 3);
+    let col = emptyIndex % 3;
+
+    const addMove = (newGrid, currentLevel) => {
+      if (!isGridInPath(newGrid, path)) {
+        listOfPossibleMoves.push({
+          grid: newGrid,
+          heuristic: getHeuristic(newGrid, finalGrid),
+          currentLevel: currentLevel + 1,
+          path: [...path, newGrid]
+        });
+      }
+    };
+
+    if (row > 0) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex - 3].value] = [newGrid[emptyIndex - 3].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+    if (row < 2) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex + 3].value] = [newGrid[emptyIndex + 3].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+    if (col > 0) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex - 1].value] = [newGrid[emptyIndex - 1].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+    if (col < 2) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex + 1].value] = [newGrid[emptyIndex + 1].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+
+    return listOfPossibleMoves;
+  };
+
+  const getPossibleMovesSecondLevelA = ({ grid: actualGrid, heuristic, currentLevel, path }) => {
+    let listOfPossibleMoves = [];
+    let emptyIndex = actualGrid.findIndex(square => square.value === '');
+    let row = Math.floor(emptyIndex / 3);
+    let col = emptyIndex % 3;
+
+    const addMove = (newGrid, currentLevel) => {
+      if (!isGridInPath(newGrid, path)) {
+        listOfPossibleMoves.push({ grid: newGrid, heuristic: getHeuristic(newGrid, finalGrid), currentLevel: currentLevel + 1, path: [...path, newGrid] });
+      }
+    };
+
+    if (row > 0) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex - 3].value] = [newGrid[emptyIndex - 3].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+    if (row < 2) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex + 3].value] = [newGrid[emptyIndex + 3].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+    if (col > 0) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex - 1].value] = [newGrid[emptyIndex - 1].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+    if (col < 2) {
+      let newGrid = actualGrid.map(square => ({ ...square }));
+      [newGrid[emptyIndex].value, newGrid[emptyIndex + 1].value] = [newGrid[emptyIndex + 1].value, newGrid[emptyIndex].value];
+      addMove(newGrid, currentLevel);
+    }
+
+    listOfPossibleMoves.forEach(move => {
+      let secondLevelMoves = getPossibleMovesFirstLevel({ grid: move.grid, heuristic: move.heuristic, currentLevel: move.currentLevel, path: move.path });
+      secondLevelMoves = secondLevelMoves.filter(secondMove => !areGridsEqual(secondMove.grid, actualGrid));
+      if (secondLevelMoves.length > 0) {
+        move.heuristic = Math.min(...secondLevelMoves.map(secondMove => (secondMove.heuristic + secondMove.currentLevel)));
+      }
+    });
+
+    return listOfPossibleMoves;
+  };
+
+  const insertWithPriorityHeuristic = (nodes, queue) => {
     nodes.forEach(node => {
       let i = 0;
-      while (i < queue.length && queue[i].outOfOrder <= node.outOfOrder) {
+      while (i < queue.length && queue[i].heuristic <= node.heuristic) {
         i++;
       }
       queue.splice(i, 0, node);
     });
   };
 
-  const insertWithPriorityOutOfOrderPlusLevel = (nodes, queue) => {
+  const insertWithPriorityHeuristicPlusLevel = (nodes, queue) => {
     nodes.forEach(node => {
       let i = 0;
-      while (i < queue.length && (queue[i].outOfOrder + queue[i].currentLevel) <= (node.outOfOrder + node.currentLevel)) {
+      while (i < queue.length && (queue[i].heuristic + queue[i].currentLevel) <= (node.heuristic + node.currentLevel)) {
         i++;
       }
       queue.splice(i, 0, node);
     });
   }
 
-  const getOutOfOrder = (actualGrid, finalGrid) => {
-    let outOfOrder = 0;
-    for (let i = 0; i < 9; i++) {
-      if (actualGrid[i].value !== finalGrid[i].value) {
-        outOfOrder++;
+  const getHeuristic = (actualGrid, finalGrid) => {
+    if (heuristic === 'outOfOrder') {
+      let outOfOrder = 0;
+      for (let i = 0; i < 9; i++) {
+        if (actualGrid[i].value !== finalGrid[i].value) {
+          outOfOrder++;
+        }
       }
+      return outOfOrder;
+    } else {
+      return calculateManhattanDistance(actualGrid, finalGrid);
     }
-    return outOfOrder;
+  };
+
+  const calculateManhattanDistance = (actualGrid, finalGrid) => {
+    let totalDistance = 0;
+
+    for (let i = 0; i < actualGrid.length; i++) {
+      const actualValue = actualGrid[i].value;
+      const actualRow = Math.floor(i / 3);
+      const actualCol = i % 3;
+
+      const finalIndex = finalGrid.findIndex(square => square.value === actualValue);
+      const finalRow = Math.floor(finalIndex / 3);
+      const finalCol = finalIndex % 3;
+
+      const distance = Math.abs(actualRow - finalRow) + Math.abs(actualCol - finalCol);
+      totalDistance += distance;
+    }
+
+    return totalDistance;
   };
 
   const handleSolveA = () => {
@@ -280,24 +389,24 @@ const App = () => {
     let visitedNodes = 0;
     let startTime = new Date().getTime();
     let queue = [];
-    let firstObject = { grid: actualGrid, outOfOrder: getOutOfOrder(actualGrid, goalGrid), currentLevel: 0, path: [actualGrid] };
+    let firstObject = { grid: actualGrid, heuristic: getHeuristic(actualGrid, goalGrid), currentLevel: 0, path: [actualGrid] };
     if (level === 'first') {
-      insertWithPriorityOutOfOrderPlusLevel(getPossibleMovesFirstLevel(firstObject), queue);
+      insertWithPriorityHeuristicPlusLevel(getPossibleMovesFirstLevelA(firstObject), queue);
     } else {
-      insertWithPriorityOutOfOrderPlusLevel(getPossibleMovesSecondLevel(firstObject), queue);
+      insertWithPriorityHeuristicPlusLevel(getPossibleMovesSecondLevelA(firstObject), queue);
     }
     actualGrid = queue.shift();
     while (!areGridsEqual(actualGrid.grid, goalGrid)) {
       if (level === 'first') {
-        insertWithPriorityOutOfOrderPlusLevel(getPossibleMovesFirstLevel(actualGrid), queue);
+        insertWithPriorityHeuristicPlusLevel(getPossibleMovesFirstLevelA(actualGrid), queue);
       } else {
-        insertWithPriorityOutOfOrderPlusLevel(getPossibleMovesSecondLevel(actualGrid), queue);
+        insertWithPriorityHeuristicPlusLevel(getPossibleMovesSecondLevelA(actualGrid), queue);
       }
       visitedNodes++;
       actualGrid = queue.shift();
     }
     let totalTime = new Date().getTime() - startTime;
-    setTotalTime(totalTime/1000);
+    setTotalTime(totalTime / 1000);
     setNumberOfVisitedNodes(visitedNodes);
     setPathSize(actualGrid.path.length);
     animateShuffle(actualGrid.path);
@@ -309,6 +418,14 @@ const App = () => {
 
   const selectSecondLevel = () => {
     setLevel('second');
+  };
+
+  const selectOutOfOrder = () => {
+    setHeuristic('outOfOrder');
+  };
+
+  const selectManhattan = () => {
+    setHeuristic('manhattan');
   };
 
   return (
@@ -333,8 +450,8 @@ const App = () => {
           <Button className="mt-3" onClick={handleSave}>Definir Estado Final</Button>
           {numberOfVisitedNodes !== 0 && (
             <p>
-              Tempo total: {totalTime}s <br/>
-              Número de nós visitados: {numberOfVisitedNodes} <br/>
+              Tempo total: {totalTime}s <br />
+              Número de nós visitados: {numberOfVisitedNodes} <br />
               Tamanho do caminho da solução: {pathSize}
             </p>
           )}
@@ -351,6 +468,8 @@ const App = () => {
           <Button className="mt-3" onClick={handleShuffle}>Embaralhar</Button>
           <Button className={`mt-3 ml-3 ${level === 'first' ? 'btn-danger' : ''}`} onClick={selectFirstLevel}>1º Nível</Button>
           <Button className={`mt-3 ml-3 ${level === 'second' ? 'btn-danger' : ''}`} onClick={selectSecondLevel}>2º Nível</Button>
+          <Button className={`mt-3 ml-3 ${heuristic === 'outOfOrder' ? 'btn-danger' : ''}`} onClick={selectOutOfOrder}>Peças Fora do Lugar</Button>
+          <Button className={`mt-3 ml-3 ${heuristic === 'manhattan' ? 'btn-danger' : ''}`} onClick={selectManhattan}>Distância Manhattan</Button>
           <Button className="mt-3" onClick={handleBestFirst}>Resolver Best First</Button>
           <div className=""></div>
           <Button className="mt-3" onClick={handleSolveA}>Resolver A*</Button>
