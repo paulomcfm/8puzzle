@@ -23,6 +23,7 @@ const App = () => {
   const [totalTime, setTotalTime] = useState(0);
   const [numberOfVisitedNodes, setNumberOfVisitedNodes] = useState(0);
   const [pathSize, setPathSize] = useState(0);
+  const [solution, setSolution] = useState('');
 
   const handleReset = () => {
     window.location.reload();
@@ -116,7 +117,7 @@ const App = () => {
     return path.some(p => areGridsEqual(p, grid));
   };
 
-  const handleBestFirst = () => {
+  const handleSolveBestFirst = () => {
     setTotalTime(0);
     setNumberOfVisitedNodes(0);
     setPathSize(0);
@@ -146,6 +147,7 @@ const App = () => {
     setNumberOfVisitedNodes(visitedNodes);
     setPathSize(actualGrid.path.length);
     animateShuffle(actualGrid.path);
+    setSolution(actualGrid.path.map(grid => formatGrid(grid)).join('\n\n'));
   };
 
   const areGridsEqual = (grid1, grid2) => {
@@ -410,6 +412,7 @@ const App = () => {
     setNumberOfVisitedNodes(visitedNodes);
     setPathSize(actualGrid.path.length);
     animateShuffle(actualGrid.path);
+    setSolution(actualGrid.path.map(grid => formatGrid(grid)).join('\n\n'));
   };
 
   const selectFirstLevel = () => {
@@ -426,6 +429,14 @@ const App = () => {
 
   const selectManhattan = () => {
     setHeuristic('manhattan');
+  };
+
+  const formatGrid = (grid) => {
+    let formattedGrid = '';
+    for (let i = 0; i < grid.length; i += 3) {
+      formattedGrid += `[ ${grid[i].value === '' ? '-' : grid[i].value}, ${grid[i + 1].value === '' ? '-' : grid[i + 1].value}, ${grid[i + 2].value === '' ? '-' : grid[i + 2].value} ]\n`;
+    }
+    return formattedGrid.trim();
   };
 
   return (
@@ -452,11 +463,22 @@ const App = () => {
             <Button className="mt-3" onClick={handleReset}>Reset</Button>
           </div>
           {numberOfVisitedNodes !== 0 && (
-            <p style={{ marginTop: '10px' }}>
-              Tempo total: {totalTime}s <br />
-              Número de nós visitados: {numberOfVisitedNodes} <br />
-              Tamanho do caminho da solução: {pathSize}
-            </p>
+            <>
+              <p style={{ marginTop: '10px' }}>
+                Tempo total: {totalTime}s <br />
+                Número de nós visitados: {numberOfVisitedNodes} <br />
+                Tamanho do caminho da solução: {pathSize}
+              </p>
+              <div>
+                <textarea
+                  value={solution}
+                  readOnly
+                  rows={10}
+                  cols={50}
+                  style={{ marginTop: '20px', width: '100%' }}
+                />
+              </div>
+            </>
           )}
           <Form.Group className="mt-3">
             <Form.Label>Embaralhar X vezes:</Form.Label>
@@ -479,11 +501,11 @@ const App = () => {
             <Button className={`mt-3 ml-3 ${heuristic === 'manhattan' ? 'btn-danger' : ''}`} onClick={selectManhattan}>Distância Manhattan</Button>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          <Button className="mt-3" onClick={handleBestFirst}>Resolver Best First</Button>
-          <Button className="mt-3" onClick={handleSolveA}>Resolver A*</Button>
-        </div>
-      </Col>
-    </Row>
+            <Button className="mt-3" onClick={handleSolveBestFirst}>Resolver Best First</Button>
+            <Button className="mt-3" onClick={handleSolveA}>Resolver A*</Button>
+          </div>
+        </Col>
+      </Row>
     </Container >
   );
 };
