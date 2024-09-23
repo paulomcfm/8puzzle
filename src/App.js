@@ -435,7 +435,7 @@ const App = () => {
         <Col xs={12} md={4}>
           <Row>
             {grid.map((square, index) => (
-              <Col key={square.id} xs={4} className="border p-3 text-center square" data-id={index} style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: valueToColor[square.value] }}>
+              <Col key={square.id} xs={4} className="border p-3 text-center square" data-id={index} style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: valueToColor[square.value], borderRadius: "10px" }}>
                 <Form.Control
                   type="number"
                   min="1"
@@ -447,15 +447,17 @@ const App = () => {
               </Col>
             ))}
           </Row>
-          <Button className="mt-3" onClick={handleSave}>Definir Estado Final</Button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <Button className="mt-3" onClick={handleSave}>Definir Estado Final</Button>
+            <Button className="mt-3" onClick={handleReset}>Reset</Button>
+          </div>
           {numberOfVisitedNodes !== 0 && (
-            <p>
+            <p style={{ marginTop: '10px' }}>
               Tempo total: {totalTime}s <br />
               Número de nós visitados: {numberOfVisitedNodes} <br />
               Tamanho do caminho da solução: {pathSize}
             </p>
           )}
-          <Button className="mt-3" onClick={handleReset}>Reset</Button>
           <Form.Group className="mt-3">
             <Form.Label>Embaralhar X vezes:</Form.Label>
             <Form.Control
@@ -465,17 +467,24 @@ const App = () => {
               className="text-center"
             />
           </Form.Group>
-          <Button className="mt-3" onClick={handleShuffle}>Embaralhar</Button>
-          <Button className={`mt-3 ml-3 ${level === 'first' ? 'btn-danger' : ''}`} onClick={selectFirstLevel}>1º Nível</Button>
-          <Button className={`mt-3 ml-3 ${level === 'second' ? 'btn-danger' : ''}`} onClick={selectSecondLevel}>2º Nível</Button>
-          <Button className={`mt-3 ml-3 ${heuristic === 'outOfOrder' ? 'btn-danger' : ''}`} onClick={selectOutOfOrder}>Peças Fora do Lugar</Button>
-          <Button className={`mt-3 ml-3 ${heuristic === 'manhattan' ? 'btn-danger' : ''}`} onClick={selectManhattan}>Distância Manhattan</Button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <Button className="mt-3" onClick={handleShuffle}>Embaralhar</Button>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <Button className={`mt-3 ml-3 ${level === 'first' ? 'btn-danger' : ''}`} onClick={selectFirstLevel}>1º Nível</Button>
+            <Button className={`mt-3 ml-3 ${level === 'second' ? 'btn-danger' : ''}`} onClick={selectSecondLevel}>2º Nível</Button>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+            <Button className={`mt-3 ml-3 ${heuristic === 'outOfOrder' ? 'btn-danger' : ''}`} onClick={selectOutOfOrder}>Peças Fora do Lugar</Button>
+            <Button className={`mt-3 ml-3 ${heuristic === 'manhattan' ? 'btn-danger' : ''}`} onClick={selectManhattan}>Distância Manhattan</Button>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
           <Button className="mt-3" onClick={handleBestFirst}>Resolver Best First</Button>
-          <div className=""></div>
           <Button className="mt-3" onClick={handleSolveA}>Resolver A*</Button>
-        </Col>
-      </Row>
-    </Container>
+        </div>
+      </Col>
+    </Row>
+    </Container >
   );
 };
 
